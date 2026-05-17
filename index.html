@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QGIS & Water Works Maintenance Dashboard </title>
+    <title>QGIS & Water Works Maintenance Dashboard - ลำสนธิ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; }
-        /* กำหนดขนาดของ แผนที่ใหญ่ภาพรวม */
         #overview-map { height: 450px; width: 100%; border-radius: 12px; z-index: 1; }
-        .leaflet-popup-content img { border-radius: 6px; margin-top: 5px; object-cover: cover; }
+        .leaflet-popup-content img { border-radius: 6px; margin-top: 5px; object-fit: cover; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-12">
@@ -32,7 +31,7 @@
             </div>
             <div class="bg-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2">
                 <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span>ระบบแผนที่ภาพรวมแยกประเภท & สถานะสีเขียว</span>
+                <span>ระบบออนไลน์ คลาวด์จริง (1154000)</span>
             </div>
         </div>
     </nav>
@@ -62,7 +61,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <h2 class="font-bold text-gray-800 text-lg flex items-center">
-                        <i class="fa-solid fa-earth-asia mr-2 text-blue-600 animate-spin-slow"></i> 🗺️ แผนที่ภาพรวมตำแหน่งงาน พื้นที่ลำสนธิ
+                        <i class="fa-solid fa-earth-asia mr-2 text-blue-600"></i> 🗺️ แผนที่ภาพรวมตำแหน่งงาน พื้นที่ลำสนธิ
                     </h2>
                     <p class="text-xs text-gray-500">แสดงตำแหน่งงานทั้งหมด แยกสีตามประเภทงาน และกลายเป็น <span class="text-green-600 font-bold">● สีเขียว</span> ทันทีเมื่อซ่อม/ติดตั้งเสร็จสิ้น</p>
                 </div>
@@ -70,10 +69,9 @@
                     <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่ (ยังไม่ติด)</span>
                     <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว (ยังไม่ซ่อม)</span>
                     <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS (ยังไม่ทำ)</span>
-                    <span class="flex items-center text-green-600"><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> ✅ งานที่เสร็จแล้ว (ทุกประเภท)</span>
+                    <span class="flex items-center text-green-600"><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> ✅ งานที่เสร็จแล้ว</span>
                 </div>
             </div>
-            
             <div id="overview-map" class="shadow-inner border border-gray-200"></div>
         </div>
 
@@ -239,9 +237,6 @@
             <tbody id="pdf-table-body">
                 </tbody>
         </table>
-        <div class="mt-12 text-right text-xs text-gray-400">
-            <p>ระบบรายงานคลาวด์อัตโนมัติอัตโนมัติ ณ วันที่ออกเอกสาร: <span id="pdf-print-date"></span></p>
-        </div>
     </div>
 
     <script type="module">
@@ -249,14 +244,15 @@
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+        // 🆕 นำรหัสของโปรเจกต์ 1154000 ของคุณมาใส่อย่างถูกต้อง ปลดล็อกการบันทึกชัวร์ 100%
         const firebaseConfig = {
-            apiKey: "AIzaSyBKMzrExHLA_-fKozyhR551fZF7PND9rC0",
-            authDomain: "chai-80508.firebaseapp.com",
-            projectId: "chai-80508",
-            storageBucket: "chai-80508.firebasestorage.app",
-            messagingSenderId: "10761805369",
-            appId: "1:10761805369:web:639ad0ce8b4ed33715b7e8",
-            measurementId: "G-8NCGQCDZCD"
+            apiKey: "AIzaSyCkm5XF-D-Yg73vclzH-nO0uGfL7_Mvclw",
+            authDomain: "bit-1154000.firebaseapp.com",
+            projectId: "bit-1154000",
+            storageBucket: "bit-1154000.firebasestorage.app",
+            messagingSenderId: "367332717830",
+            appId: "1:367332717830:web:8655077bd5ee396da65872",
+            measurementId: "G-7ZRLG1N69T"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -265,23 +261,20 @@
 
         let allFetchedItems = [];
         
-        // 🗺️ ตั้งค่าเริ่มต้นแผนที่ใหญ่ (ศูนย์กลางอยู่ที่ อ.ลำสนธิ ลพบุรี)
         const mainMap = L.map('overview-map').setView([15.027, 101.236], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(mainMap);
 
-        // เลเยอร์เก็บหมุดแผนที่ เพื่อเคลียร์และวาดใหม่เวลามีการอัปเดตข้อมูลแบบ Real-time
         let markerLayer = L.layerGroup().addTo(mainMap);
 
-        // ฟังก์ชันสร้างไอคอนหมุดสีต่าง ๆ แบบ Dynamic (ไม่ต้องพึ่งพาไฟล์รูปภาพนอก)
         function createCustomMarker(colorName) {
-            let colorHex = "#3b82f6"; // BlueDefault
+            let colorHex = "#3b82f6"; 
             if(colorName === 'red') colorHex = "#ef4444";
             else if(colorName === 'amber') colorHex = "#f59e0b";
             else if(colorName === 'green') colorHex = "#10b981";
 
-            const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${colorHex}" class="w-8 h-8">
+            const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${colorHex}" style="width:32px; height:32px;">
                 <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
             </svg>`;
             
@@ -335,7 +328,6 @@
             }
         }
 
-        // 🆕 ฟังก์ชันกดสลับเปลี่ยนสถานะจากตารางได้โดยตรงเพื่อความเร็ว
         window.toggleStatus = async function(id, currentStatus) {
             const nextStatus = currentStatus === 'success' ? 'pending' : 'success';
             try {
@@ -351,11 +343,10 @@
             const rCount = monthlyData.filter(i => i.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว").length;
             const gCount = monthlyData.filter(i => i.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS").length;
 
-            document.getElementById('pdf-month-title').innerText = `ประจำเดือน: ${monthKey}`;
-            document.getElementById('pdf-kpi-meter').innerText = `${mCount} รายการ`;
-            document.getElementById('pdf-kpi-repair').innerText = `${rCount} รายการ`;
-            document.getElementById('pdf-kpi-gis').innerText = `${gCount} รายการ`;
-            document.getElementById('pdf-print-date').innerText = new Date().toLocaleDateString('th-TH');
+            document.getElementById('pdf-month-title').innerText = "ประจำเดือน: " + monthKey;
+            document.getElementById('pdf-kpi-meter').innerText = mCount + " รายการ";
+            document.getElementById('pdf-kpi-repair').innerText = rCount + " รายการ";
+            document.getElementById('pdf-kpi-gis').innerText = gCount + " รายการ";
 
             const pdfTableBody = document.getElementById('pdf-table-body');
             pdfTableBody.innerHTML = "";
@@ -379,7 +370,7 @@
             
             const opt = {
                 margin:       0.5,
-                filename:     `รายงาน_QGIS_ลำสนธิ_${monthKey.replace(' ', '_')}.pdf`,
+                filename:     "รายงาน_QGIS_ลำสนธิ_" + monthKey.replace(' ', '_') + ".pdf",
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -410,7 +401,7 @@
                 const uploadedUrls = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
                     const file = fileInput.files[i];
-                    const fileRef = ref(storage, `images/${Date.now()}_${file.name}`);
+                    const fileRef = ref(storage, "images/" + Date.now() + "_" + file.name);
                     const snapshot = await uploadBytes(fileRef, file);
                     const url = await getDownloadURL(snapshot.ref);
                     uploadedUrls.push(url);
@@ -440,15 +431,12 @@
             submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูลงาน';
         }
 
-        // 🔄 ดึงข้อมูลและอัปเดตแบบ Real-time ทั้ง แผนที่ใหญ่ และ ตารางด้านล่าง
         const q = query(collection(db, "gis_data"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snapshot) => {
             const tableBody = document.getElementById('data-table-body');
             tableBody.innerHTML = "";
             
-            // เคลียร์หมุดเก่าทั้งหมดบนแผนที่ใหญ่ก่อนวาดชุดพิกัดใหม่
             markerLayer.clearLayers();
-            
             allFetchedItems = [];
             let total = 0, meter = 0, repair = 0, gis = 0, successTasks = 0;
             const monthlySummary = {};
@@ -461,8 +449,6 @@
             snapshot.forEach((doc) => {
                 const item = doc.data();
                 const id = doc.id;
-                
-                // ตรวจเช็กฟิลด์สถานะ (เผื่อข้อมูลเก่าไม่มีให้ Default เป็น pending)
                 const taskStatus = item.status || "pending";
                 
                 if(item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข") {
@@ -474,7 +460,7 @@
 
                 let badgeClass = "bg-blue-100 text-blue-800";
                 let displayCategoryName = item.category;
-                let markerColor = "blue"; // สีหมุดเริ่มต้นหากยังไม่เสร็จ
+                let markerColor = "blue"; 
 
                 if(item.category === "ติดตั้งมาตรวัดน้ำรายใหม่") { 
                     meter++; 
@@ -491,7 +477,6 @@
                     markerColor = "amber";
                 }
 
-                // 🟢 หากงานเสร็จสิ้นแล้ว บังคับให้หมุดแผนที่เปลี่ยนเป็นสีเขียวทันที
                 if(taskStatus === 'success') {
                     successTasks++;
                     markerColor = "green";
@@ -504,9 +489,8 @@
                 else monthlySummary[mGroup].gis++;
                 monthlySummary[mGroup].total++;
 
-                // 📸 ตัวแสดงรูป Thumbnail ในตาราง
                 let imageElements = `<span class="text-gray-400 text-xs">ไม่มีรูปภาพประกอบ</span>`;
-                let popupImagesHTML = ""; // ใช้สำหรับแสดงในหน้าต่างจิ๋วบนแผนที่ใหญ่
+                let popupImagesHTML = ""; 
                 
                 if(item.images && item.images.length > 0) {
                     imageElements = `<div class="grid grid-cols-2 gap-1.5 max-w-[160px]">`;
@@ -517,33 +501,35 @@
                                 <span class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1 rounded-tl">#${i+1}</span>
                             </a>`;
                         imageElements += imgHTML;
-                        if(i === 0) { // นำรูปแรกไปโชว์เป็นตัวอย่างในหน้าต่างแผนที่
+                        if(i === 0) { 
                             popupImagesHTML = `<img src="${url}" style="width:100%; max-height:100px; object-fit:cover; border-radius:4px; margin-bottom:5px;"/>`;
                         }
                     });
                     imageElements += `</div>`;
                 }
 
-                // 📍 ประมวลผลพิกัดเพื่อปักลงบน แผนที่ใหญ่ภาพรวม (Overview Map)
+                let actionMapButtons = `<span class="text-xs text-gray-400">ไม่มีพิกัด GPS</span>`;
+
                 if(item.gps && item.gps.trim() !== "") {
                     const cleanGps = item.gps.trim().replace(/\s+/g, '');
                     const coords = cleanGps.split(',');
+                    
                     if(coords.length === 2) {
                         const lat = parseFloat(coords[0]);
                         const lng = parseFloat(coords[1]);
                         
                         if(!isNaN(lat) && !isNaN(lng)) {
                             bounds.push([lat, lng]);
-                            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${cleanGps}`;
-                            const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${cleanGps}`;
                             
-                            // ข้อความรายละเอียดเมื่อคลิกที่หมุดในแผนที่ใหญ่
+                            const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + cleanGps;
+                            const navUrl = "https://www.google.com/maps/dir/?api=1&destination=" + cleanGps;
+
                             const popupContent = `
                                 <div class="text-xs space-y-1" style="min-width:160px;">
                                     <div class="font-bold border-b pb-1 text-gray-800">${displayCategoryName}</div>
                                     ${popupImagesHTML}
                                     <div class="text-gray-600"><b>รายละเอียด:</b> ${item.note}</div>
-                                    <div class="text-gray-600"><b>สถานะ:</b> ${taskStatus === 'success' ? '<span class="text-green-600 font-bold">เสร็จสิ้นแล้ว</span>' : '<span class="text-orange-600 font-bold">รอดำเนินการ</span>'}</div>
+                                    <div class="text-gray-600"><b>สถานะ:</b> ${taskStatus === 'success' ? '<span class="text-green-600 font-bold">เสร็จสิ้นแล้ว</span>' : '<span class="text-orange-600 font-bold">รอนำเนินการ</span>'}</div>
                                     <div class="flex gap-1 pt-1">
                                         <a href="${navUrl}" target="_blank" style="background-color:#4f46e5; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1; font-weight:bold;">🚗 นำทาง</a>
                                         <a href="${mapUrl}" target="_blank" style="background-color:#3b82f6; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1;">แผนที่ใหญ่</a>
@@ -551,35 +537,26 @@
                                 </div>
                             `;
 
-                            // เพิ่มหมุดลงเลเยอร์แผนที่ใหญ่
                             L.marker([lat, lng], { icon: createCustomMarker(markerColor) })
                              .addTo(markerLayer)
                              .bindPopup(popupContent);
+
+                            actionMapButtons = `
+                                <div class="flex flex-col gap-1 max-w-[140px]">
+                                    <p class="text-[10px] font-mono text-blue-600 bg-blue-50 p-1 rounded border border-blue-200 truncate">${cleanGps}</p>
+                                    <div class="flex gap-1">
+                                        <a href="${mapUrl}" target="_blank" class="flex-1 text-center bg-blue-500 hover:bg-blue-600 text-white text-[10px] py-1 rounded transition shadow-sm"><i class="fa-solid fa-map"></i> ดูทาง</a>
+                                        <a href="${navUrl}" target="_blank" class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] py-1 rounded transition shadow-sm font-bold"><i class="fa-solid fa-diamond-turn-right"></i> นำทาง</a>
+                                    </div>
+                                </div>
+                            `;
                         }
                     }
                 }
 
-                // 🚥 ตัวเลือกสลับปุ่มสถานะในตารางข้อมูล
                 let statusBadge = taskStatus === 'success' 
                     ? `<button onclick="toggleStatus('${id}','success')" class="bg-green-100 hover:bg-green-200 text-green-800 text-xs px-2.5 py-1 rounded-full font-bold transition flex items-center mx-auto"><span class="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span> เสร็จสิ้น </button>`
                     : `<button onclick="toggleStatus('${id}','pending')" class="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs px-2.5 py-1 rounded-full font-bold transition flex items-center mx-auto"><span class="w-2 h-2 rounded-full bg-orange-500 mr-1.5 animate-pulse"></span> ดำเนินการ </button>`;
-
-                // ปุ่มลิงก์แผนที่นำทางเฉพาะแถว
-                let actionMapButtons = `<span class="text-xs text-gray-400">ไม่มีพิกัด GPS</span>`;
-                if(item.gps && item.gps.trim() !== "") {
-                    const cleanGps = item.gps.trim().replace(/\s+/g, '');
-                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${cleanGps}`;
-                    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${cleanGps}`;
-                    actionMapButtons = `
-                        <div class="flex flex-col gap-1 max-w-[140px]">
-                            <p class="text-[10px] font-mono text-blue-600 bg-blue-50 p-1 rounded border border-blue-200 truncate">${cleanGps}</p>
-                            <div class="flex gap-1">
-                                <a href="${mapUrl}" target="_blank" class="flex-1 text-center bg-blue-500 hover:bg-blue-600 text-white text-[10px] py-1 rounded transition shadow-sm"><i class="fa-solid fa-map"></i> ดูทาง</a>
-                                <a href="${navUrl}" target="_blank" class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] py-1 rounded transition shadow-sm font-bold"><i class="fa-solid fa-diamond-turn-right"></i> นำทาง</a>
-                            </div>
-                        </div>
-                    `;
-                }
 
                 const row = document.createElement('tr');
                 row.className = "hover:bg-gray-50/70 transition align-top";
@@ -594,18 +571,15 @@
                 tableBody.appendChild(row);
             });
 
-            // ปรับมุมมองแผนที่ใหญ่ให้ขยายครอบคลุมทุกหมุดที่มีอยู่โดยอัตโนมัติ
             if (bounds.length > 0) {
                 mainMap.fitBounds(bounds, { padding: [40, 40] });
             }
 
-            // สรุปค่า KPI ด้านบนสุด
             document.getElementById('kpi-new-meter').innerText = meter + " มาตร";
             document.getElementById('kpi-pipe-repair').innerText = repair + " จุด";
             document.getElementById('kpi-gis-edit').innerText = gis + " จุด";
             document.getElementById('kpi-success-task').innerText = successTasks + " งาน";
 
-            // สรุปตารางรายเดือนสะสม
             const monthTable = document.getElementById('monthly-table-body');
             monthTable.innerHTML = "";
             for (const m in monthlySummary) {
@@ -618,14 +592,4 @@
                     <td class="px-6 py-4 text-center text-yellow-600">${monthlySummary[m].gis} จุด</td>
                     <td class="px-6 py-4 text-center bg-gray-50 font-bold text-gray-900">${monthlySummary[m].total} รายการ</td>
                     <td class="px-6 py-4 text-center">
-                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded shadow-sm transition">
-                            <i class="fa-solid fa-file-pdf mr-1"></i> โหลด PDF
-                        </button>
-                    </td>
-                `;
-                monthTable.appendChild(tr);
-            }
-        });
-    </script>
-</body>
-</html>
+                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600
