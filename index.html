@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QGIS & Water Works Maintenance Dashboard </title>
+    <title>QGIS & Water Works Maintenance Dashboard - ลำสนธิ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -286,7 +286,6 @@
             });
         }
 
-        // 🛠️ ปรับตัวกรองเงื่อนไขการเช็กสลับปุ่มให้สลับได้ชัวร์ 100% ไม่ติดขัดสระ
         window.switchTab = function(tabId) {
             document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
             document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
@@ -307,7 +306,8 @@
             } else if(tabId === 'tab3') {
                 document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
                 document.getElementById('note-tab3').classList.remove('hidden');
-                document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
+                // 🛠️ คืนค่ากลับเป็นข้อความชุดเดิมสั้นกระชับ เพื่อไม่ให้คลาวด์บล็อกการบันทึก
+                document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข";
             }
         }
 
@@ -345,7 +345,7 @@
 
             const mCount = monthlyData.filter(i => i.category === "ติดตั้งมาตรวัดน้ำรายใหม่").length;
             const rCount = monthlyData.filter(i => i.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว").length;
-            const gCount = monthlyData.filter(i => i.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS").length;
+            const gCount = monthlyData.filter(i => i.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข" || i.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS").length;
 
             document.getElementById('pdf-month-title').innerText = "ประจำเดือน: " + monthKey;
             document.getElementById('pdf-kpi-meter').innerText = mCount + " รายการ";
@@ -358,7 +358,7 @@
             monthlyData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-gray-300";
-                let cleanCat = item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS" ? "แจ้งแก้ไขระบบ QGIS" : item.category;
+                let cleanCat = (item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข" || item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS") ? "แจ้งแก้ไขระบบ QGIS" : item.category;
 
                 tr.innerHTML = `
                     <td class="p-2 border border-gray-300 font-bold">${cleanCat}</td>
@@ -454,10 +454,6 @@
                 const item = doc.data();
                 const id = doc.id;
                 const taskStatus = item.status || "pending";
-                
-                if(item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข") {
-                    item.category = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
-                }
                 
                 allFetchedItems.push({ id, ...item, status: taskStatus });
                 total++;
@@ -591,19 +587,4 @@
                 tr.className = "hover:bg-gray-50 text-gray-600 transition font-semibold";
                 tr.innerHTML = `
                     <td class="px-6 py-4">${m}</td>
-                    <td class="px-6 py-4 text-center text-blue-600">${monthlySummary[m].meter} มาตร</td>
-                    <td class="px-6 py-4 text-center text-red-600">${monthlySummary[m].repair} จุด</td>
-                    <td class="px-6 py-4 text-center text-yellow-600">${monthlySummary[m].gis} จุด</td>
-                    <td class="px-6 py-4 text-center bg-gray-50 font-bold text-gray-900">${monthlySummary[m].total} รายการ</td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded shadow-sm transition">
-                            <i class="fa-solid fa-file-pdf mr-1"></i> โหลด PDF
-                        </button>
-                    </td>
-                `;
-                monthTable.appendChild(tr);
-            }
-        });
-    </script>
-</body>
-</html>
+                    <td class="px
