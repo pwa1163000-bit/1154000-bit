@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QGIS & Water Works Maintenance Dashboard </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+        /* กำหนดขนาดของ แผนที่ใหญ่ภาพรวม */
+        #overview-map { height: 450px; width: 100%; border-radius: 12px; z-index: 1; }
+        .leaflet-popup-content img { border-radius: 6px; margin-top: 5px; object-cover: cover; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-12">
+
+    <nav class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-map-location-dot text-2xl text-blue-200"></i>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">ระบบบันทึกและติดตามงาน QGIS ลำสนธิ</h1>
+                    <p class="text-xs text-blue-200">สรุปรายงานประจำวันและรายเดือน • การประปาส่วนภูมิภาค</p>
+                </div>
+            </div>
+            <div class="bg-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span>ระบบแผนที่ภาพรวมแยกประเภท & สถานะสีเขียว</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-xs font-medium text-gray-500">ติดตั้งมาตรรายใหม่ (รวม)</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1" id="kpi-new-meter">0 มาตร</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+                <p class="text-xs font-medium text-gray-500">แจ้งซ่อมท่อแตก/รั่ว (รวม)</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1" id="kpi-pipe-repair">0 จุด</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <p class="text-xs font-medium text-gray-500">แจ้งแก้ไขระบบ QGIS (รวม)</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1" id="kpi-gis-edit">0 จุด</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-xs font-medium text-gray-500">งานที่ดำเนินการเสร็จสิ้น</p>
+                <h3 class="text-xl font-bold text-green-600 mt-1" id="kpi-success-task">0 งาน</h3>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <h2 class="font-bold text-gray-800 text-lg flex items-center">
+                        <i class="fa-solid fa-earth-asia mr-2 text-blue-600 animate-spin-slow"></i> 🗺️ แผนที่ภาพรวมตำแหน่งงาน พื้นที่ลำสนธิ
+                    </h2>
+                    <p class="text-xs text-gray-500">แสดงตำแหน่งงานทั้งหมด แยกสีตามประเภทงาน และกลายเป็น <span class="text-green-600 font-bold">● สีเขียว</span> ทันทีเมื่อซ่อม/ติดตั้งเสร็จสิ้น</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs font-semibold bg-gray-50 p-2 rounded-lg border border-gray-200">
+                    <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่ (ยังไม่ติด)</span>
+                    <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว (ยังไม่ซ่อม)</span>
+                    <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS (ยังไม่ทำ)</span>
+                    <span class="flex items-center text-green-600"><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> ✅ งานที่เสร็จแล้ว (ทุกประเภท)</span>
+                </div>
+            </div>
+            
+            <div id="overview-map" class="shadow-inner border border-gray-200"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
+                <h2 class="font-bold text-gray-800 flex items-center">
+                    <i class="fa-solid fa-calendar-days mr-2 text-indigo-600"></i> 📊 ตารางสรุปปริมาณงานสะสมรายเดือน (ทุกหมวดหมู่)
+                </h2>
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md font-semibold">ออกรายงาน PDF ได้ท้ายแถว</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-xs font-bold text-gray-600 bg-gray-50">
+                            <th class="px-6 py-3">ประจำเดือน</th>
+                            <th class="px-6 py-3 text-center text-blue-600">🏠 1. ติดตั้งมาตรใหม่</th>
+                            <th class="px-6 py-3 text-center text-red-600">🔧 2. แจ้งซ่อมท่อแตก/รั่ว</th>
+                            <th class="px-6 py-3 text-center text-yellow-600">🗺️ 3. แก้ไขระบบ QGIS</th>
+                            <th class="px-6 py-3 text-center bg-gray-100 font-bold text-gray-800">ผลรวมทุกงาน</th>
+                            <th class="px-6 py-3 text-center">รายงาน PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthly-table-body" class="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="font-bold text-gray-800 text-lg mb-4 flex items-center">
+                <i class="fa-solid fa-square-plus mr-2 text-blue-500"></i> บันทึกข้อมูลเพิ่มรายการใหม่หน้างาน
+            </h2>
+            
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button type="button" onclick="switchTab('tab1')" id="btn-tab1" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition">
+                    1. ติดตั้งมาตรใหม่
+                </button>
+                <button type="button" onclick="switchTab('tab2')" id="btn-tab2" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                    2. แจ้งซ่อมท่อแตก/รั่ว
+                </button>
+                <button type="button" onclick="switchTab('tab3')" id="btn-tab3" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                    3. แจ้งแก้ไขระบบ QGIS
+                </button>
+            </div>
+
+            <form id="main-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="current-category" value="ติดตั้งมาตรวัดน้ำรายใหม่">
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">พิกัดหน้างาน (GPS) <span class="text-red-500">*</span></label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="form-gps" required placeholder="เช่น 15.02341, 101.23452" class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" onclick="getLocation()" class="bg-gray-800 text-white px-3 rounded-lg text-xs font-medium hover:bg-gray-700 transition flex items-center">
+                                <i class="fa-solid fa-location-crosshairs mr-1"></i> ดึงพิกัด
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">รูปถ่ายหน้างาน (1-3 รูป) <span class="text-red-500">*</span></label>
+                        <input type="file" id="form-photos" accept="image/*" multiple required class="block w-full text-xs text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 p-1.5">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">สถานะความคืบหน้าของงาน <span class="text-red-500">*</span></label>
+                        <select id="form-status" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 font-semibold">
+                            <option value="pending" class="text-orange-600">⏳ รอดำเนินการ / กำลังทำ (สีตามประเภทงาน)</option>
+                            <option value="success" class="text-green-600">✅ เสร็จสิ้นแล้ว (เปลี่ยนหมุดเป็นสีเขียวทันที)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">ประเภท/หมายเหตุข้อกำหนด <span class="text-red-500">*</span></label>
+                    <select id="note-tab1" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2">
+                        <option value="บ้านที่พักอาศัย">🏠 บ้านที่พักอาศัย</option>
+                        <option value="ร้านค้า">🏪 ร้านค้า</option>
+                        <option value="ชั่วคราว">⏱️ ชั่วคราว</option>
+                        <option value="อื่นๆ">📝 อื่นๆ</option>
+                    </select>
+                    <select id="note-tab2" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2 hidden">
+                        <option value="ท่อ PB ขนาด 20-50mm">🔵 ท่อ PB ขนาดท่อ 20-50mm</option>
+                        <option value="ท่อ HDPE ขนาด 110-160mm">⚫ ท่อ HDPE 110-160mm</option>
+                        <option value="ท่อ PVC ขนาด 55-300mm">🔵 ท่อ PVC 55-300 mm</option>
+                    </select>
+                    <select id="note-tab3" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2 hidden">
+                        <option value="แก้ไขอุปกรณ์: มาตรวัดน้ำ">💧 แก้ไขอุปกรณ์: มาตรวัดน้ำ</option>
+                        <option value="แก้ไขอุปกรณ์: หัวดับเพลิง">🧑‍🚒 แก้ไขอุปกรณ์: หัวดับเพลิง</option>
+                        <option value="แก้ไขอุปกรณ์: แอร์วาวล์">💨 แก้ไขอุปกรณ์: แอร์วาวล์</option>
+                        <option value="แก้ไขเส้นท่อ (เพิ่ม)">➕ แก้ไขเส้นท่อ (เพิ่ม)</option>
+                        <option value="แก้ไขเส้นท่อ (ลบ)">➖ แก้ไขเส้นท่อ (ลบ)</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" id="submit-btn" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg text-sm transition shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูลงาน
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h2 class="font-bold text-gray-700 flex items-center">
+                    <i class="fa-solid fa-table-list mr-2 text-blue-500"></i> รายการบันทึกประวัติการทำงานในระบบคลาวด์
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[950px]">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase bg-gray-50/50">
+                            <th class="px-4 py-3 w-[15%]">หมวดหมู่รายงาน</th>
+                            <th class="px-4 py-3 w-[10%] text-center">สถานะงาน</th>
+                            <th class="px-4 py-3 w-[20%]">รูปถ่ายหน้างานจริง</th>
+                            <th class="px-4 py-3 w-[25%]">ตำแหน่งและการนำทาง</th>
+                            <th class="px-4 py-3 w-[20%]">ประเภท / หมายเหตุ</th>
+                            <th class="px-4 py-3 text-center w-[10%]">จัดการข้อมูล</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-gray-100 text-sm text-gray-600">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-400">กำลังโหลดข้อมูลจากคลาวด์...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="pdf-template" class="hidden p-8 bg-white text-gray-900" style="font-family: 'Sarabun', sans-serif;">
+        <div class="text-center border-b-2 border-gray-800 pb-4 mb-6">
+            <h1 class="text-2xl font-bold">รายงานสรุปการปฏิบัติงานและการปรับปรุงระบบ QGIS</h1>
+            <p class="text-md text-gray-600 mt-1">พื้นที่จ่ายน้ำลำสนธิ • การประปาส่วนภูมิภาค</p>
+            <p class="text-md font-bold text-blue-700 mt-2" id="pdf-month-title">ประจำเดือน: -</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="border p-3 rounded">
+                <p class="text-xs text-gray-500 font-bold">🏠 ติดตั้งมาตรใหม่</p>
+                <h3 class="text-lg font-bold mt-1 text-blue-600" id="pdf-kpi-meter">0 รายการ</h3>
+            </div>
+            <div class="border p-3 rounded">
+                <p class="text-xs text-gray-500 font-bold">🔧 ซ่อมท่อแตก/รั่ว</p>
+                <h3 class="text-lg font-bold mt-1 text-red-600" id="pdf-kpi-repair">0 รายการ</h3>
+            </div>
+            <div class="border p-3 rounded">
+                <p class="text-xs text-gray-500 font-bold">🗺️ แก้ไขระบบ QGIS</p>
+                <h3 class="text-lg font-bold mt-1 text-yellow-600" id="pdf-kpi-gis">0 รายการ</h3>
+            </div>
+        </div>
+
+        <table class="w-full text-left text-xs border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-100 border-b border-gray-300">
+                    <th class="p-2 border border-gray-300">หมวดหมู่รายงาน</th>
+                    <th class="p-2 border border-gray-300">พิกัด (GPS)</th>
+                    <th class="p-2 border border-gray-300">รายละเอียดรายละเอียด</th>
+                    <th class="p-2 border border-gray-300 text-center">จำนวนรูปภาพแนบ</th>
+                </tr>
+            </thead>
+            <tbody id="pdf-table-body">
+                </tbody>
+        </table>
+        <div class="mt-12 text-right text-xs text-gray-400">
+            <p>ระบบรายงานคลาวด์อัตโนมัติอัตโนมัติ ณ วันที่ออกเอกสาร: <span id="pdf-print-date"></span></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKMzrExHLA_-fKozyhR551fZF7PND9rC0",
+            authDomain: "chai-80508.firebaseapp.com",
+            projectId: "chai-80508",
+            storageBucket: "chai-80508.firebasestorage.app",
+            messagingSenderId: "10761805369",
+            appId: "1:10761805369:web:639ad0ce8b4ed33715b7e8",
+            measurementId: "G-8NCGQCDZCD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let allFetchedItems = [];
+        
+        // 🗺️ ตั้งค่าเริ่มต้นแผนที่ใหญ่ (ศูนย์กลางอยู่ที่ อ.ลำสนธิ ลพบุรี)
+        const mainMap = L.map('overview-map').setView([15.027, 101.236], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(mainMap);
+
+        // เลเยอร์เก็บหมุดแผนที่ เพื่อเคลียร์และวาดใหม่เวลามีการอัปเดตข้อมูลแบบ Real-time
+        let markerLayer = L.layerGroup().addTo(mainMap);
+
+        // ฟังก์ชันสร้างไอคอนหมุดสีต่าง ๆ แบบ Dynamic (ไม่ต้องพึ่งพาไฟล์รูปภาพนอก)
+        function createCustomMarker(colorName) {
+            let colorHex = "#3b82f6"; // BlueDefault
+            if(colorName === 'red') colorHex = "#ef4444";
+            else if(colorName === 'amber') colorHex = "#f59e0b";
+            else if(colorName === 'green') colorHex = "#10b981";
+
+            const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${colorHex}" class="w-8 h-8">
+                <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
+            </svg>`;
+            
+            return L.divIcon({
+                html: svgTemplate,
+                className: 'custom-svg-marker',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -30]
+            });
+        }
+
+        window.switchTab = function(tabId) {
+            document.getElementById('btn-tab1').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab2').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab3').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            
+            document.getElementById('note-tab1').classList.add('hidden');
+            document.getElementById('note-tab2').classList.add('hidden');
+            document.getElementById('note-tab3').classList.add('hidden');
+
+            if(tabId === 'tab1') {
+                document.getElementById('btn-tab1').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition";
+                document.getElementById('note-tab1').classList.remove('hidden');
+                document.getElementById('current-category').value = "ติดตั้งมาตรวัดน้ำรายใหม่";
+            } else if(tabId === 'tab2') {
+                document.getElementById('btn-tab2').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-red-600 text-white shadow-sm transition";
+                document.getElementById('note-tab2').classList.remove('hidden');
+                document.getElementById('current-category').value = "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว";
+            } else if(tabId === 'tab3') {
+                document.getElementById('btn-tab3').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
+                document.getElementById('note-tab3').classList.remove('hidden');
+                document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
+            }
+        }
+
+        window.getLocation = function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('form-gps').value = position.coords.latitude.toFixed(5) + ", " + position.coords.longitude.toFixed(5);
+                }, function() { alert("กรุณากรอกพิกัดด้วยตนเอง"); });
+            }
+        }
+
+        window.deleteRow = async function(id) {
+            if(confirm("คุณต้องการลบข้อมูลรายการนี้ออกจากระบบคลาวด์ใช่หรือไม่?")) {
+                try {
+                    await deleteDoc(doc(db, "gis_data", id));
+                    alert("ลบข้อมูลสำเร็จ!");
+                } catch(e) { alert("ลบไม่สำเร็จ"); }
+            }
+        }
+
+        // 🆕 ฟังก์ชันกดสลับเปลี่ยนสถานะจากตารางได้โดยตรงเพื่อความเร็ว
+        window.toggleStatus = async function(id, currentStatus) {
+            const nextStatus = currentStatus === 'success' ? 'pending' : 'success';
+            try {
+                await updateDoc(doc(db, "gis_data", id), { status: nextStatus });
+            } catch (e) { alert("อัปเดตสถานะไม่สำเร็จ"); }
+        }
+
+        window.downloadMonthlyPDF = function(monthKey) {
+            const monthlyData = allFetchedItems.filter(item => item.monthGroup === monthKey);
+            if(monthlyData.length === 0) return alert("ไม่มีข้อมูลสำหรับการจัดทำรายงานในเดือนนี้");
+
+            const mCount = monthlyData.filter(i => i.category === "ติดตั้งมาตรวัดน้ำรายใหม่").length;
+            const rCount = monthlyData.filter(i => i.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว").length;
+            const gCount = monthlyData.filter(i => i.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS").length;
+
+            document.getElementById('pdf-month-title').innerText = `ประจำเดือน: ${monthKey}`;
+            document.getElementById('pdf-kpi-meter').innerText = `${mCount} รายการ`;
+            document.getElementById('pdf-kpi-repair').innerText = `${rCount} รายการ`;
+            document.getElementById('pdf-kpi-gis').innerText = `${gCount} รายการ`;
+            document.getElementById('pdf-print-date').innerText = new Date().toLocaleDateString('th-TH');
+
+            const pdfTableBody = document.getElementById('pdf-table-body');
+            pdfTableBody.innerHTML = "";
+
+            monthlyData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-300";
+                let cleanCat = item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS" ? "แจ้งแก้ไขระบบ QGIS" : item.category;
+
+                tr.innerHTML = `
+                    <td class="p-2 border border-gray-300 font-bold">${cleanCat}</td>
+                    <td class="p-2 border border-gray-300 font-mono">${item.gps}</td>
+                    <td class="p-2 border border-gray-300">${item.note} [${item.status === 'success' ? 'เสร็จสิ้น' : 'กำลังทำ'}]</td>
+                    <td class="p-2 border border-gray-300 text-center">${item.images ? item.images.length : 0} รูป</td>
+                `;
+                pdfTableBody.appendChild(tr);
+            });
+
+            const element = document.getElementById('pdf-template');
+            element.classList.remove('hidden');
+            
+            const opt = {
+                margin:       0.5,
+                filename:     `รายงาน_QGIS_ลำสนธิ_${monthKey.replace(' ', '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.add('hidden');
+            });
+        }
+
+        window.handleFormSubmit = async function(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "กำลังบันทึกลงคลาวด์...";
+
+            const category = document.getElementById('current-category').value;
+            const gps = document.getElementById('form-gps').value;
+            const status = document.getElementById('form-status').value;
+            const fileInput = document.getElementById('form-photos');
+            
+            let note = "";
+            if(category === "ติดตั้งมาตรวัดน้ำรายใหม่") note = document.getElementById('note-tab1').value;
+            else if(category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว") note = document.getElementById('note-tab2').value;
+            else note = document.getElementById('note-tab3').value;
+
+            try {
+                const uploadedUrls = [];
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    const fileRef = ref(storage, `images/${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytes(fileRef, file);
+                    const url = await getDownloadURL(snapshot.ref);
+                    uploadedUrls.push(url);
+                }
+
+                const today = new Date();
+                const monthName = today.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+                await addDoc(collection(db, "gis_data"), {
+                    category,
+                    gps,
+                    note,
+                    status,
+                    images: uploadedUrls,
+                    monthGroup: monthName,
+                    timestamp: Date.now()
+                });
+
+                document.getElementById('form-gps').value = "";
+                document.getElementById('form-photos').value = "";
+                alert("บันทึกข้อมูลและเพิ่มหมุดเรียบร้อย!");
+            } catch (error) {
+                console.error(error);
+                alert("บันทึกไม่สำเร็จ!");
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูลงาน';
+        }
+
+        // 🔄 ดึงข้อมูลและอัปเดตแบบ Real-time ทั้ง แผนที่ใหญ่ และ ตารางด้านล่าง
+        const q = query(collection(db, "gis_data"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = "";
+            
+            // เคลียร์หมุดเก่าทั้งหมดบนแผนที่ใหญ่ก่อนวาดชุดพิกัดใหม่
+            markerLayer.clearLayers();
+            
+            allFetchedItems = [];
+            let total = 0, meter = 0, repair = 0, gis = 0, successTasks = 0;
+            const monthlySummary = {};
+            const bounds = [];
+
+            if (snapshot.empty) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">ยังไม่มีข้อมูลในฐานข้อมูลคลาวด์</td></tr>`;
+            }
+
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                const id = doc.id;
+                
+                // ตรวจเช็กฟิลด์สถานะ (เผื่อข้อมูลเก่าไม่มีให้ Default เป็น pending)
+                const taskStatus = item.status || "pending";
+                
+                if(item.category === "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข") {
+                    item.category = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
+                }
+                
+                allFetchedItems.push({ id, ...item, status: taskStatus });
+                total++;
+
+                let badgeClass = "bg-blue-100 text-blue-800";
+                let displayCategoryName = item.category;
+                let markerColor = "blue"; // สีหมุดเริ่มต้นหากยังไม่เสร็จ
+
+                if(item.category === "ติดตั้งมาตรวัดน้ำรายใหม่") { 
+                    meter++; 
+                    badgeClass = "bg-blue-100 text-blue-800"; 
+                    markerColor = "blue";
+                } else if(item.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว") { 
+                    repair++; 
+                    badgeClass = "bg-red-100 text-red-800"; 
+                    markerColor = "red";
+                } else { 
+                    gis++; 
+                    badgeClass = "bg-yellow-100 text-yellow-800"; 
+                    displayCategoryName = "แจ้งแก้ไขระบบ QGIS";
+                    markerColor = "amber";
+                }
+
+                // 🟢 หากงานเสร็จสิ้นแล้ว บังคับให้หมุดแผนที่เปลี่ยนเป็นสีเขียวทันที
+                if(taskStatus === 'success') {
+                    successTasks++;
+                    markerColor = "green";
+                }
+
+                const mGroup = item.monthGroup || "ไม่ระบุเดือน";
+                if(!monthlySummary[mGroup]) monthlySummary[mGroup] = { meter: 0, repair: 0, gis: 0, total: 0 };
+                if(item.category === "ติดตั้งมาตรวัดน้ำรายใหม่") monthlySummary[mGroup].meter++;
+                else if(item.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว") monthlySummary[mGroup].repair++;
+                else monthlySummary[mGroup].gis++;
+                monthlySummary[mGroup].total++;
+
+                // 📸 ตัวแสดงรูป Thumbnail ในตาราง
+                let imageElements = `<span class="text-gray-400 text-xs">ไม่มีรูปภาพประกอบ</span>`;
+                let popupImagesHTML = ""; // ใช้สำหรับแสดงในหน้าต่างจิ๋วบนแผนที่ใหญ่
+                
+                if(item.images && item.images.length > 0) {
+                    imageElements = `<div class="grid grid-cols-2 gap-1.5 max-w-[160px]">`;
+                    item.images.forEach((url, i) => {
+                        const imgHTML = `
+                            <a href="${url}" target="_blank" class="block relative group overflow-hidden border border-gray-200 rounded-md shadow-sm bg-gray-100">
+                                <img src="${url}" class="w-full h-12 object-cover group-hover:scale-110 transition duration-300" alt="รูปหน้างาน">
+                                <span class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1 rounded-tl">#${i+1}</span>
+                            </a>`;
+                        imageElements += imgHTML;
+                        if(i === 0) { // นำรูปแรกไปโชว์เป็นตัวอย่างในหน้าต่างแผนที่
+                            popupImagesHTML = `<img src="${url}" style="width:100%; max-height:100px; object-fit:cover; border-radius:4px; margin-bottom:5px;"/>`;
+                        }
+                    });
+                    imageElements += `</div>`;
+                }
+
+                // 📍 ประมวลผลพิกัดเพื่อปักลงบน แผนที่ใหญ่ภาพรวม (Overview Map)
+                if(item.gps && item.gps.trim() !== "") {
+                    const cleanGps = item.gps.trim().replace(/\s+/g, '');
+                    const coords = cleanGps.split(',');
+                    if(coords.length === 2) {
+                        const lat = parseFloat(coords[0]);
+                        const lng = parseFloat(coords[1]);
+                        
+                        if(!isNaN(lat) && !isNaN(lng)) {
+                            bounds.push([lat, lng]);
+                            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${cleanGps}`;
+                            const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${cleanGps}`;
+                            
+                            // ข้อความรายละเอียดเมื่อคลิกที่หมุดในแผนที่ใหญ่
+                            const popupContent = `
+                                <div class="text-xs space-y-1" style="min-width:160px;">
+                                    <div class="font-bold border-b pb-1 text-gray-800">${displayCategoryName}</div>
+                                    ${popupImagesHTML}
+                                    <div class="text-gray-600"><b>รายละเอียด:</b> ${item.note}</div>
+                                    <div class="text-gray-600"><b>สถานะ:</b> ${taskStatus === 'success' ? '<span class="text-green-600 font-bold">เสร็จสิ้นแล้ว</span>' : '<span class="text-orange-600 font-bold">รอดำเนินการ</span>'}</div>
+                                    <div class="flex gap-1 pt-1">
+                                        <a href="${navUrl}" target="_blank" style="background-color:#4f46e5; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1; font-weight:bold;">🚗 นำทาง</a>
+                                        <a href="${mapUrl}" target="_blank" style="background-color:#3b82f6; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1;">แผนที่ใหญ่</a>
+                                    </div>
+                                </div>
+                            `;
+
+                            // เพิ่มหมุดลงเลเยอร์แผนที่ใหญ่
+                            L.marker([lat, lng], { icon: createCustomMarker(markerColor) })
+                             .addTo(markerLayer)
+                             .bindPopup(popupContent);
+                        }
+                    }
+                }
+
+                // 🚥 ตัวเลือกสลับปุ่มสถานะในตารางข้อมูล
+                let statusBadge = taskStatus === 'success' 
+                    ? `<button onclick="toggleStatus('${id}','success')" class="bg-green-100 hover:bg-green-200 text-green-800 text-xs px-2.5 py-1 rounded-full font-bold transition flex items-center mx-auto"><span class="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span> เสร็จสิ้น </button>`
+                    : `<button onclick="toggleStatus('${id}','pending')" class="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs px-2.5 py-1 rounded-full font-bold transition flex items-center mx-auto"><span class="w-2 h-2 rounded-full bg-orange-500 mr-1.5 animate-pulse"></span> ดำเนินการ </button>`;
+
+                // ปุ่มลิงก์แผนที่นำทางเฉพาะแถว
+                let actionMapButtons = `<span class="text-xs text-gray-400">ไม่มีพิกัด GPS</span>`;
+                if(item.gps && item.gps.trim() !== "") {
+                    const cleanGps = item.gps.trim().replace(/\s+/g, '');
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${cleanGps}`;
+                    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${cleanGps}`;
+                    actionMapButtons = `
+                        <div class="flex flex-col gap-1 max-w-[140px]">
+                            <p class="text-[10px] font-mono text-blue-600 bg-blue-50 p-1 rounded border border-blue-200 truncate">${cleanGps}</p>
+                            <div class="flex gap-1">
+                                <a href="${mapUrl}" target="_blank" class="flex-1 text-center bg-blue-500 hover:bg-blue-600 text-white text-[10px] py-1 rounded transition shadow-sm"><i class="fa-solid fa-map"></i> ดูทาง</a>
+                                <a href="${navUrl}" target="_blank" class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] py-1 rounded transition shadow-sm font-bold"><i class="fa-solid fa-diamond-turn-right"></i> นำทาง</a>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50/70 transition align-top";
+                row.innerHTML = `
+                    <td class="px-4 py-4 font-medium text-gray-900"><span class="px-2 py-1 ${badgeClass} text-xs rounded font-semibold block text-center">${displayCategoryName}</span></td>
+                    <td class="px-4 py-4 text-center">${statusBadge}</td>
+                    <td class="px-4 py-3">${imageElements}</td>
+                    <td class="px-4 py-3">${actionMapButtons}</td>
+                    <td class="px-4 py-4 font-medium text-gray-800">${item.note}</td>
+                    <td class="px-4 py-4 text-center"><button onclick="deleteRow('${id}')" class="text-red-500 hover:text-red-700 text-xs font-medium"><i class="fa-solid fa-trash-can"></i> ลบ</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // ปรับมุมมองแผนที่ใหญ่ให้ขยายครอบคลุมทุกหมุดที่มีอยู่โดยอัตโนมัติ
+            if (bounds.length > 0) {
+                mainMap.fitBounds(bounds, { padding: [40, 40] });
+            }
+
+            // สรุปค่า KPI ด้านบนสุด
+            document.getElementById('kpi-new-meter').innerText = meter + " มาตร";
+            document.getElementById('kpi-pipe-repair').innerText = repair + " จุด";
+            document.getElementById('kpi-gis-edit').innerText = gis + " จุด";
+            document.getElementById('kpi-success-task').innerText = successTasks + " งาน";
+
+            // สรุปตารางรายเดือนสะสม
+            const monthTable = document.getElementById('monthly-table-body');
+            monthTable.innerHTML = "";
+            for (const m in monthlySummary) {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 text-gray-600 transition font-semibold";
+                tr.innerHTML = `
+                    <td class="px-6 py-4">${m}</td>
+                    <td class="px-6 py-4 text-center text-blue-600">${monthlySummary[m].meter} มาตร</td>
+                    <td class="px-6 py-4 text-center text-red-600">${monthlySummary[m].repair} จุด</td>
+                    <td class="px-6 py-4 text-center text-yellow-600">${monthlySummary[m].gis} จุด</td>
+                    <td class="px-6 py-4 text-center bg-gray-50 font-bold text-gray-900">${monthlySummary[m].total} รายการ</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded shadow-sm transition">
+                            <i class="fa-solid fa-file-pdf mr-1"></i> โหลด PDF
+                        </button>
+                    </td>
+                `;
+                monthTable.appendChild(tr);
+            }
+        });
+    </script>
+</body>
+</html>
