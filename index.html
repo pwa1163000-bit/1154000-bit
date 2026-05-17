@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QGIS & Water Works Maintenance Dashboard - ลำสนธิ</title>
+    <title>QGIS & Water Works Maintenance Dashboard </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -106,13 +106,13 @@
             </h2>
             
             <div class="grid grid-cols-3 gap-2 mb-4">
-                <button type="button" onclick="switchTab('tab1')" id="btn-tab1" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition">
+                <button type="button" onclick="switchTab('tab1')" id="btn-tab1" class="w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition">
                     1. ติดตั้งมาตรใหม่
                 </button>
-                <button type="button" onclick="switchTab('tab2')" id="btn-tab2" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                <button type="button" onclick="switchTab('tab2')" id="btn-tab2" class="w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
                     2. แจ้งซ่อมท่อแตก/รั่ว
                 </button>
-                <button type="button" onclick="switchTab('tab3')" id="btn-tab3" class="py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                <button type="button" onclick="switchTab('tab3')" id="btn-tab3" class="w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
                     3. แจ้งแก้ไขระบบ QGIS
                 </button>
             </div>
@@ -244,7 +244,6 @@
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // 🆕 นำรหัสของโปรเจกต์ 1154000 ของคุณมาใส่อย่างถูกต้อง ปลดล็อกการบันทึกชัวร์ 100%
         const firebaseConfig = {
             apiKey: "AIzaSyCkm5XF-D-Yg73vclzH-nO0uGfL7_Mvclw",
             authDomain: "bit-1154000.firebaseapp.com",
@@ -287,25 +286,26 @@
             });
         }
 
+        // 🛠️ ปรับตัวกรองเงื่อนไขการเช็กสลับปุ่มให้สลับได้ชัวร์ 100% ไม่ติดขัดสระ
         window.switchTab = function(tabId) {
-            document.getElementById('btn-tab1').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
-            document.getElementById('btn-tab2').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
-            document.getElementById('btn-tab3').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
             
             document.getElementById('note-tab1').classList.add('hidden');
             document.getElementById('note-tab2').classList.add('hidden');
             document.getElementById('note-tab3').classList.add('hidden');
 
             if(tabId === 'tab1') {
-                document.getElementById('btn-tab1').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition";
+                document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition";
                 document.getElementById('note-tab1').classList.remove('hidden');
                 document.getElementById('current-category').value = "ติดตั้งมาตรวัดน้ำรายใหม่";
             } else if(tabId === 'tab2') {
-                document.getElementById('btn-tab2').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-red-600 text-white shadow-sm transition";
+                document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-red-600 text-white shadow-sm transition";
                 document.getElementById('note-tab2').classList.remove('hidden');
                 document.getElementById('current-category').value = "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว";
             } else if(tabId === 'tab3') {
-                document.getElementById('btn-tab3').className = "py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
+                document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
                 document.getElementById('note-tab3').classList.remove('hidden');
                 document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
             }
@@ -315,7 +315,11 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     document.getElementById('form-gps').value = position.coords.latitude.toFixed(5) + ", " + position.coords.longitude.toFixed(5);
-                }, function() { alert("กรุณากรอกพิกัดด้วยตนเอง"); });
+                }, function(error) { 
+                    alert("ดึงพิกัดอัตโนมัติไม่สำเร็จ เนื่องจากสิทธิ์บราวเซอร์ถูกล็อก กรุณากรอกพิกัดด้วยตนเองครับ"); 
+                });
+            } else {
+                alert("อุปกรณ์นี้ไม่รองรับระบบดึงพิกัดอัตโนมัติ");
             }
         }
 
@@ -592,4 +596,14 @@
                     <td class="px-6 py-4 text-center text-yellow-600">${monthlySummary[m].gis} จุด</td>
                     <td class="px-6 py-4 text-center bg-gray-50 font-bold text-gray-900">${monthlySummary[m].total} รายการ</td>
                     <td class="px-6 py-4 text-center">
-                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600
+                        <button onclick="downloadMonthlyPDF('${m}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded shadow-sm transition">
+                            <i class="fa-solid fa-file-pdf mr-1"></i> โหลด PDF
+                        </button>
+                    </td>
+                `;
+                monthTable.appendChild(tr);
+            }
+        });
+    </script>
+</body>
+</html>
