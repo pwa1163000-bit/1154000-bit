@@ -25,13 +25,13 @@
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-map-location-dot text-2xl text-blue-200"></i>
                 <div>
-                    <h1 class="text-lg font-bold leading-tight">ระบบบันทึกและติดตามงาน 17671 </h1>
+                    <h1 class="text-lg font-bold leading-tight">ระบบบันทึกและติดตามงาน QGIS ลำสนธิ</h1>
                     <p class="text-xs text-blue-200">สรุปรายงานประจำวันและรายเดือน • การประปาส่วนภูมิภาค สาขาชัยบาดาล</p>
                 </div>
             </div>
             <div class="bg-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2">
                 <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span>เชื่อมต่อ ImgBB (คีย์ส่วนตัวของคุณ Yok)</span>
+                <span>เวอร์ชันแยกสคริปต์ UI ปุ่มกดลื่นไหล 100%</span>
             </div>
         </div>
     </nav>
@@ -66,9 +66,9 @@
                     <p class="text-xs text-gray-500">แสดงตำแหน่งงานทั้งหมด แยกสีตามประเภทงาน และกลายเป็น <span class="text-green-600 font-bold">● สีเขียว</span> ทันทีเมื่อเสร็จสิ้น</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs font-semibold bg-gray-50 p-2 rounded-lg border border-gray-200">
-                    <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่ (ยังไม่ติด)</span>
-                    <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว (ยังไม่ซ่อม)</span>
-                    <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS (ยังไม่ทำ)</span>
+                    <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่</span>
+                    <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว</span>
+                    <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS</span>
                     <span class="flex items-center text-green-600"><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> ✅ งานที่เสร็จแล้ว</span>
                 </div>
             </div>
@@ -144,7 +144,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">ประเภท/หมายเหตุรายละเอียดข้อกำหนด <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">ประเภท/หมายเหตุรายละเอียด <span class="text-red-500">*</span></label>
                     <select id="note-tab1" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2">
                         <option value="บ้านที่พักอาศัย">🏠 บ้านที่พักอาศัย</option>
                         <option value="ร้านค้า">🏪 ร้านค้า</option>
@@ -220,6 +220,47 @@
         </table>
     </div>
 
+    <script>
+        function switchTab(tabId) {
+            // คืนค่าปุ่มทั้งหมดให้เป็นสีเทา
+            document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
+            
+            // ซ่อนตัวเลือกดรอปดาวน์ทั้งหมด
+            document.getElementById('note-tab1').classList.add('hidden');
+            document.getElementById('note-tab2').classList.add('hidden');
+            document.getElementById('note-tab3').classList.add('hidden');
+
+            // เปลี่ยนสีปุ่มที่กด และแสดงตัวเลือกดรอปดาวน์ให้ตรงหมวดหมู่
+            if(tabId === 'tab1') {
+                document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition";
+                document.getElementById('note-tab1').classList.remove('hidden');
+                document.getElementById('current-category').value = "ติดตั้งมาตรวัดน้ำรายใหม่";
+            } else if(tabId === 'tab2') {
+                document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-red-600 text-white shadow-sm transition";
+                document.getElementById('note-tab2').classList.remove('hidden');
+                document.getElementById('current-category').value = "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว";
+            } else if(tabId === 'tab3') {
+                document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
+                document.getElementById('note-tab3').classList.remove('hidden');
+                document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
+            }
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('form-gps').value = position.coords.latitude.toFixed(5) + ", " + position.coords.longitude.toFixed(5);
+                }, function() { 
+                    alert("กรุณากรอกพิกัดด้วยตนเองครับ เช่น 15.027, 101.236"); 
+                });
+            } else {
+                alert("อุปกรณ์ไม่รองรับการดึงพิกัด");
+            }
+        }
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -237,7 +278,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 🔐 อัปเดตเป็น API Key ส่วนตัวของคุณ Yok เรียบร้อยแล้วครับ!
+        // คีย์ส่วนตัว ImgBB ของคุณ Yok 
         const IMGBB_API_KEY = "64e2261d33f516b0a748c0d7fb105e2e"; 
 
         let allFetchedItems = [];
@@ -257,40 +298,6 @@
 
             const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${colorHex}" style="width:32px; height:32px;"><path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" /></svg>`;
             return L.divIcon({ html: svgTemplate, className: 'custom-svg-marker', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -30] });
-        }
-
-        window.switchTab = function(tabId) {
-            document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
-            document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
-            document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-gray-100 text-gray-600 hover:bg-gray-200 transition";
-            
-            document.getElementById('note-tab1').classList.add('hidden');
-            document.getElementById('note-tab2').classList.add('hidden');
-            document.getElementById('note-tab3').classList.add('hidden');
-
-            if(tabId === 'tab1') {
-                document.getElementById('btn-tab1').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-blue-600 text-white shadow-sm transition";
-                document.getElementById('note-tab1').classList.remove('hidden');
-                document.getElementById('current-category').value = "ติดตั้งมาตรวัดน้ำรายใหม่";
-            } else if(tabId === 'tab2') {
-                document.getElementById('btn-tab2').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-red-600 text-white shadow-sm transition";
-                document.getElementById('note-tab2').classList.remove('hidden');
-                document.getElementById('current-category').value = "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว";
-            } else if(tabId === 'tab3') {
-                document.getElementById('btn-tab3').className = "w-full py-2.5 px-2 text-xs lg:text-sm font-semibold rounded-lg text-center bg-yellow-500 text-white shadow-sm transition";
-                document.getElementById('note-tab3').classList.remove('hidden');
-                document.getElementById('current-category').value = "แก้ไขเพิ่มเติม เพื่อแจ้งระบบให้แก้ไข QGIS";
-            }
-        }
-
-        window.getLocation = function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    document.getElementById('form-gps').value = position.coords.latitude.toFixed(5) + ", " + position.coords.longitude.toFixed(5);
-                }, function() { 
-                    alert("กรุณากรอกพิกัดด้วยตนเองครับ เช่น 15.027, 101.236"); 
-                });
-            }
         }
 
         window.deleteRow = async function(id) {
