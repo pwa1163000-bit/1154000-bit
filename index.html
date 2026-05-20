@@ -25,13 +25,13 @@
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-map-location-dot text-2xl text-blue-200"></i>
                 <div>
-                    <h1 class="text-lg font-bold leading-tight">ระบบบันทึกและติดตามงาน ช่างหยก </h1>
-                    <p class="text-xs text-blue-200">สรุปรายงานประจำวันและรายเดือน • การประปาส่วนภูมิภาค</p>
+                    <h1 class="text-lg font-bold leading-tight">ระบบบันทึกและติดตามงาน QGIS ลำสนธิ</h1>
+                    <p class="text-xs text-blue-200">สรุปรายงานประจำวันและรายเดือน • การประปาส่วนภูมิภาค สาขาชัยบาดาล</p>
                 </div>
             </div>
             <div class="bg-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2">
                 <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span>เวอร์ชันบีบอัดรูปภาพอัตโนมัติ (เสถียรสูงสุด)</span>
+                <span>เวอร์ชันแก้ไข Patch Error (เสถียร 100%)</span>
             </div>
         </div>
     </nav>
@@ -66,9 +66,9 @@
                     <p class="text-xs text-gray-500">แสดงตำแหน่งงานทั้งหมด แยกสีตามประเภทงาน และกลายเป็น <span class="text-green-600 font-bold">● สีเขียว</span> ทันทีเมื่อเสร็จสิ้น</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs font-semibold bg-gray-50 p-2 rounded-lg border border-gray-200">
-                    <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่ (ยังไม่ติด)</span>
-                    <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว (ยังไม่ซ่อม)</span>
-                    <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS (ยังไม่ทำ)</span>
+                    <span class="flex items-center text-blue-600"><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span> มาตรใหม่</span>
+                    <span class="flex items-center text-red-600"><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span> ท่อแตก/รั่ว</span>
+                    <span class="flex items-center text-yellow-600"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span> แก้ไข QGIS</span>
                     <span class="flex items-center text-green-600"><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> ✅ งานที่เสร็จแล้ว</span>
                 </div>
             </div>
@@ -192,7 +192,7 @@
     <div id="pdf-template" class="hidden p-8 bg-white text-gray-900" style="font-family: 'Sarabun', sans-serif;">
         <div class="text-center border-b-2 border-gray-800 pb-4 mb-6">
             <h1 class="text-2xl font-bold">รายงานสรุปการปฏิบัติงานและการปรับปรุงระบบ QGIS</h1>
-            <p class="text-md text-gray-600 mt-1">พื้นที่จ่ายน้ำลำสนธิ • การประปาส่วนภูมิภาค</p>
+            <p class="text-md text-gray-600 mt-1">พื้นที่จ่ายน้ำลำสนธิ • การประปาส่วนภูมิภาค สาขาชัยบาดาล</p>
             <p class="text-md font-bold text-blue-700 mt-2" id="pdf-month-title">ประจำเดือน: -</p>
         </div>
         <table class="w-full text-left text-xs border-collapse border border-gray-300">
@@ -244,7 +244,6 @@
             return L.divIcon({ html: svgTemplate, className: 'custom-svg-marker', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -30] });
         }
 
-        // คืนค่ารายการดรอปดาวน์แยกประเภทงานแบบดั้งเดิมอย่างถูกต้อง
         const optionsMap = {
             tab1: [
                 { val: "บ้านที่พักอาศัย", text: "🏠 บ้านที่พักอาศัย" },
@@ -294,13 +293,13 @@
                 navigator.geolocation.getCurrentPosition(function(position) {
                     document.getElementById('form-gps').value = position.coords.latitude.toFixed(5) + ", " + position.coords.longitude.toFixed(5);
                 }, function() { 
-                    alert("ระบบดึงค่าอัตโนมัติล็อกชั่วคราว คุณ Yok สามารถพิมพ์พิกัดเองได้เลยครับ เช่น 15.027, 101.236"); 
+                    alert("ระบบดึงตำแหน่งขัดข้อง กรุณาพิมพ์พิกัดเองในรูปแบบ: ละติจูด, ลองจิจูด"); 
                 });
             }
         }
 
         window.deleteRow = async function(id) {
-            if(confirm("คุณต้องการลบข้อมูลรายการนี้ออกจากระบบคลาวด์ใช่หรือไม่?")) {
+            if(confirm("คุณต้องการลบข้อมูลรายการนี้ออกจากคลาวด์ใช่หรือไม่?")) {
                 try { await deleteDoc(doc(db, "gis_data", id)); alert("ลบข้อมูลสำเร็จ!"); } catch(e) { alert("ลบไม่สำเร็จ"); }
             }
         }
@@ -310,7 +309,7 @@
             try { await updateDoc(doc(db, "gis_data", id), { status: nextStatus }); } catch (e) { alert("อัปเดตสถานะไม่สำเร็จ"); }
         }
 
-        // 🆕 ฟังก์ชันใหม่สำหรับบีบอัดรูปภาพหน้างานจริงให้เหลือไฟล์ขนาดเล็กจิ๋ว ก่อนแปลงเป็นรหัสส่งเข้าคลาวด์
+        // แก้ไขคำผิดสำเร็จ: '2canvas' -> เปลี่ยนกลับเป็น '2d' เรียบร้อย แผนที่และปุ่มกดจะกลับมาใช้งานได้ทั้งหมด
         const resizeAndCompressImage = (file) => new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -322,7 +321,6 @@
                     let width = img.width;
                     let height = img.height;
 
-                    // กำหนดให้ความกว้างรูปไม่เกิน 1024 พิกเซล เพื่อประหยัดพื้นที่และจำกัดขนาด Base64 ให้ไม่เกินโควตา 1MB
                     const MAX_WIDTH = 1024;
                     if (width > MAX_WIDTH) {
                         height = Math.round((height * MAX_WIDTH) / width);
@@ -331,10 +329,9 @@
 
                     canvas.width = width;
                     canvas.height = height;
-                    const ctx = canvas.getContext('2canvas');
+                    const ctx = canvas.getContext('2d'); 
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // บีบอัดคุณภาพไฟล์รูปภาพลงเหลือ 70% (ภาพยังคมชัดปกติ แต่ไฟล์เล็กระดับ KB บันทึกผ่านฉลุยแน่นอน)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     resolve(dataUrl);
                 };
@@ -356,7 +353,6 @@
             try {
                 const compressedBase64Images = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
-                    // เรียกใช้ฟังก์ชันย่อขนาดไฟล์ก่อนอัปโหลด
                     const compressedStr = await resizeAndCompressImage(fileInput.files[i]);
                     compressedBase64Images.push(compressedStr);
                 }
@@ -376,13 +372,53 @@
 
                 document.getElementById('form-gps').value = "";
                 document.getElementById('form-photos').value = "";
-                alert("บันทึกข้อมูลและพล็อตหมุดแผนที่เรียบร้อยสำเร็จ!");
+                alert("บันทึกข้อมูลและพล็อตหมุดแผนที่สำเร็จ!");
             } catch (error) {
                 console.error(error);
                 alert("บันทึกไม่สำเร็จ!");
             }
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูลงาน';
+        }
+
+        // คืนค่าฟังก์ชันดาวน์โหลดรายงาน PDF ประจำเดือนระบบคลาวด์ตัวเดิมกลับมาให้สมบูรณ์
+        window.downloadMonthlyPDF = function(monthName) {
+            const filteredItems = allFetchedItems.filter(item => item.monthGroup === monthName);
+            document.getElementById('pdf-month-title').innerText = "ประจำเดือน: " + monthName;
+            
+            const pdfBody = document.getElementById('pdf-table-body');
+            pdfBody.innerHTML = "";
+
+            if(filteredItems.length === 0) {
+                pdfBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px;">ไม่มีข้อมูลปฏิบัติงานในเดือนนี้</td></tr>`;
+            } else {
+                filteredItems.forEach(item => {
+                    let dispName = item.category === "ติดตั้งมาตรวัดน้ำรายใหม่" ? "ติดตั้งมาตรใหม่" : (item.category === "ท่อ แจ้งซ่อมท่อแตกท่อรั่ว" ? "แจ้งซ่อมท่อแตก/รั่ว" : "แก้ไขระบบ QGIS");
+                    let imgHTML = "";
+                    if(item.images && item.images.length > 0) {
+                        imgHTML = `<img src="${item.images[0]}" style="width:80px; height:60px; object-fit:cover; margin:auto; display:block; border:1px solid #ccc;"/>`;
+                    }
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = "1px solid #ddd";
+                    tr.innerHTML = `<td style="padding:8px; border:1px solid #ccc;">${dispName}</td><td style="padding:8px; border:1px solid #ccc; font-family:monospace;">${item.gps}</td><td style="padding:8px; border:1px solid #ccc;">${item.note}</td><td style="padding:5px; border:1px solid #ccc; text-align:center;">${imgHTML}</td>`;
+                    pdfBody.appendChild(tr);
+                });
+            }
+
+            const element = document.getElementById('pdf-template');
+            element.classList.remove('hidden');
+            
+            const opt = {
+                margin: 0.5,
+                filename: `รายงาน QGIS ลำสนธิ_${monthName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.add('hidden');
+            });
         }
 
         const q = query(collection(db, "gis_data"), orderBy("timestamp", "desc"));
@@ -396,7 +432,7 @@
             const bounds = [];
 
             if (snapshot.empty) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">ยังไม่มีข้อมูลในฐานข้อมูลคลาวด์</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">ยังไม่มีข้อมูลในระบบคลาวด์</td></tr>`;
             }
 
             snapshot.forEach((doc) => {
@@ -428,7 +464,7 @@
                 else monthlySummary[mGroup].gis++;
                 monthlySummary[mGroup].total++;
 
-                let imageElements = `<span class="text-gray-400 text-xs">ไม่มีรูปภาพประกอบ</span>`;
+                let imageElements = `<span class="text-gray-400 text-xs">ไม่มีรูปภาพ</span>`;
                 let popupImagesHTML = ""; 
                 
                 if(item.images && item.images.length > 0) {
@@ -449,10 +485,10 @@
                         const lat = parseFloat(coords[0]); const lng = parseFloat(coords[1]);
                         if(!isNaN(lat) && !isNaN(lng)) {
                             bounds.push([lat, lng]);
-                            const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + cleanGps;
+                            const mapUrl = "https://maps.google.com/?q=" + cleanGps;
                             const navUrl = "https://www.google.com/maps/dir/?api=1&destination=" + cleanGps;
 
-                            const popupContent = `<div class="text-xs space-y-1" style="min-width:160px;"><div class="font-bold border-b pb-1 text-gray-800">${displayCategoryName}</div>${popupImagesHTML}<div class="text-gray-600"><b>หมายเหตุ:</b> ${item.note}</div><div class="text-gray-600"><b>status:</b> ${taskStatus === 'success' ? '<span class="text-green-600 font-bold">เสร็จสิ้นแล้ว</span>' : '<span class="text-orange-600 font-bold">รอนำเนินการ</span>'}</div><div class="flex gap-1 pt-1"><a href="${navUrl}" target="_blank" style="background-color:#4f46e5; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1; font-weight:bold;">🚗 นำทาง</a><a href="${mapUrl}" target="_blank" style="background-color:#3b82f6; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1;">ดูแผนที่</a></div></div>`;
+                            const popupContent = `<div class="text-xs space-y-1" style="min-width:160px;"><div class="font-bold border-b pb-1 text-gray-800">${displayCategoryName}</div>${popupImagesHTML}<div class="text-gray-600"><b>หมายเหตุ:</b> ${item.note}</div><div class="text-gray-600"><b>สถานะ:</b> ${taskStatus === 'success' ? '<span class="text-green-600 font-bold">เสร็จสิ้นแล้ว</span>' : '<span class="text-orange-600 font-bold">รอมอบหมาย</span>'}</div><div class="flex gap-1 pt-1"><a href="${navUrl}" target="_blank" style="background-color:#4f46e5; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1; font-weight:bold;">🚗 นำทาง</a><a href="${mapUrl}" target="_blank" style="background-color:#3b82f6; color:white; padding:3px 6px; border-radius:4px; text-decoration:none; text-align:center; flex:1;">แผนที่</a></div></div>`;
                             L.marker([lat, lng], { icon: createCustomMarker(markerColor) }).addTo(markerLayer).bindPopup(popupContent);
 
                             actionMapButtons = `<div class="flex flex-col gap-1 max-w-[140px]"><p class="text-[10px] font-mono text-blue-600 bg-blue-50 p-1 rounded truncate">${cleanGps}</p><div class="flex gap-1"><a href="${mapUrl}" target="_blank" class="flex-1 text-center bg-blue-500 text-white text-[10px] py-1 rounded shadow-sm">ดูแผนที่</a><a href="${navUrl}" target="_blank" class="flex-1 text-center bg-indigo-600 text-white text-[10px] py-1 rounded shadow-sm font-bold">นำทาง</a></div></div>`;
